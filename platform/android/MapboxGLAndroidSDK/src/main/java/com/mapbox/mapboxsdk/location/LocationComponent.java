@@ -705,6 +705,7 @@ public final class LocationComponent {
    *
    * @param options to update the current style
    */
+  @SuppressLint("MissingPermission")
   public void applyStyle(@NonNull final LocationComponentOptions options) {
     checkActivationState();
     LocationComponent.this.options = options;
@@ -716,6 +717,9 @@ public final class LocationComponent {
       locationAnimatorCoordinator.setTrackingAnimationDurationMultiplier(options.trackingAnimationDurationMultiplier());
       locationAnimatorCoordinator.setCompassAnimationEnabled(options.compassAnimationEnabled());
       locationAnimatorCoordinator.setAccuracyAnimationEnabled(options.accuracyAnimationEnabled());
+      if (options.pulseEnabled()) {
+        locationAnimatorCoordinator.startPulsing(mapboxMap);
+      }
       updateMapWithOptions(options);
     }
   }
@@ -1223,10 +1227,14 @@ public final class LocationComponent {
     locationAnimatorCoordinator = new LocationAnimatorCoordinator(
       mapboxMap.getProjection(),
       MapboxAnimatorSetProvider.getInstance(),
-      MapboxAnimatorProvider.getInstance()
+      MapboxAnimatorProvider.getInstance(), options
     );
     locationAnimatorCoordinator.setTrackingAnimationDurationMultiplier(options
       .trackingAnimationDurationMultiplier());
+
+    if (options.pulseEnabled()) {
+      locationAnimatorCoordinator.startPulsing(mapboxMap);
+    }
 
     WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
     SensorManager sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);

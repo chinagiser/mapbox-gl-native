@@ -14,6 +14,8 @@ import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.log.Logger;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.Projection;
+import com.mapbox.mapboxsdk.style.layers.Layer;
+import com.mapbox.mapboxsdk.style.layers.PropertyFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.Set;
 import static com.mapbox.mapboxsdk.location.LocationComponentConstants.ACCURACY_RADIUS_ANIMATION_DURATION;
 import static com.mapbox.mapboxsdk.location.LocationComponentConstants.COMPASS_UPDATE_RATE_MS;
 import static com.mapbox.mapboxsdk.location.LocationComponentConstants.MAX_ANIMATION_DURATION_MS;
+import static com.mapbox.mapboxsdk.location.LocationComponentConstants.PROPERTY_PULSING_CIRCLE_LAYER;
 import static com.mapbox.mapboxsdk.location.LocationComponentConstants.TRANSITION_ANIMATION_DURATION_MS;
 import static com.mapbox.mapboxsdk.location.MapboxAnimator.ANIMATOR_CAMERA_COMPASS_BEARING;
 import static com.mapbox.mapboxsdk.location.MapboxAnimator.ANIMATOR_CAMERA_GPS_BEARING;
@@ -51,6 +54,8 @@ final class LocationAnimatorCoordinator {
   private final MapboxAnimatorSetProvider animatorSetProvider;
   private boolean compassAnimationEnabled;
   private boolean accuracyAnimationEnabled;
+  private PulsingLocationCircleAnimator pulsingLocationCircleAnimator;
+  private LocationComponentOptions locationComponentOptions;
 
   @VisibleForTesting
   int maxAnimationFps = Integer.MAX_VALUE;
@@ -59,10 +64,12 @@ final class LocationAnimatorCoordinator {
   final SparseArray<MapboxAnimator.AnimationsValueChangeListener> listeners = new SparseArray<>();
 
   LocationAnimatorCoordinator(@NonNull Projection projection, @NonNull MapboxAnimatorSetProvider animatorSetProvider,
-                              @NonNull MapboxAnimatorProvider animatorProvider) {
+                              @NonNull MapboxAnimatorProvider animatorProvider,
+                              @NonNull LocationComponentOptions locationComponentOptions) {
     this.projection = projection;
     this.animatorProvider = animatorProvider;
     this.animatorSetProvider = animatorSetProvider;
+    this.locationComponentOptions = locationComponentOptions;
   }
 
   void updateAnimatorListenerHolders(@NonNull Set<AnimatorListenerHolder> listenerHolders) {
@@ -133,6 +140,48 @@ final class LocationAnimatorCoordinator {
       ANIMATOR_LAYER_ACCURACY);
 
     this.previousAccuracyRadius = targetAccuracyRadius;
+  }
+
+  void startPulsing(final MapboxMap mapboxMap) {
+
+    final Layer pulsingCircleLayer = mapboxMap.getStyle().getLayer(PROPERTY_PULSING_CIRCLE_LAYER);
+    MapboxAnimator.AnimationsValueChangeListener animationsValueChangeListener = new MapboxAnimator.AnimationsValueChangeListener() {
+      @Override
+      public void onNewAnimationValue(final Object newPulsingRadius) {
+
+        Logger.d(TAG, "newPulsingRadius = " + newPulsingRadius);
+
+        pulsingCircleLayer.setProperties(
+          PropertyFactory.circleRadius((Float) newPulsingRadius));
+      }
+    };
+
+    pulsingLocationCircleAnimator = new PulsingLocationCircleAnimator(animationsValueChangeListener,
+      getMaxAnimationFps(), locationComponentOptions);
+
+    cancelAnimator(MapboxAnimator.ANIMATOR_PULSING_CIRCLE_RADIUS);
+    animatorArray.put(MapboxAnimator.ANIMATOR_PULSING_CIRCLE_RADIUS, pulsingLocationCircleAnimator);
+
+    playPulsingAnimator();
+
+    // Left here in case others want to try straight ValueAnimator implementation. Will eventually
+    // delete before merging.
+
+    /*ValueAnimator animator = ValueAnimator.ofFloat(0f, 60f);
+    animator.setDuration((long)locationComponentOptions.pulseSingleDuration());
+    animator.setInterpolator(new DecelerateInterpolator());
+    animator.setRepeatMode(ValueAnimator.RESTART);
+    animator.setRepeatCount(ValueAnimator.INFINITE);
+    animator.start();
+    animator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+      @Override
+      public void onAnimationUpdate(ValueAnimator valueAnimator) {
+
+        Logger.d(TAG, "valueAnimator.getAnimatedValue() = " + valueAnimator.getAnimatedValue());
+        pulsingCircleLayer.setProperties(
+          PropertyFactory.circleRadius((Float) valueAnimator.getAnimatedValue()));
+      }
+    });*/
   }
 
   void feedNewZoomLevel(double targetZoomLevel, @NonNull CameraPosition currentCameraPosition, long animationDuration,
@@ -294,6 +343,13 @@ final class LocationAnimatorCoordinator {
     animatorSetProvider.startAnimation(animators, new LinearInterpolator(), duration);
   }
 
+  private void playPulsingAnimator() {
+    Animator animator = animatorArray.get(MapboxAnimator.ANIMATOR_PULSING_CIRCLE_RADIUS);
+    if (animator != null) {
+      animatorSetProvider.startSingleAnimation(animator);
+    }
+  }
+
   void resetAllCameraAnimations(@NonNull CameraPosition currentCameraPosition, boolean isGpsNorth) {
     resetCameraCompassAnimation(currentCameraPosition);
     boolean snap = resetCameraLocationAnimations(currentCameraPosition, isGpsNorth);
@@ -418,5 +474,9 @@ final class LocationAnimatorCoordinator {
       return;
     }
     this.maxAnimationFps = maxAnimationFps;
+  }
+
+  public int getMaxAnimationFps() {
+    return maxAnimationFps;
   }
 }

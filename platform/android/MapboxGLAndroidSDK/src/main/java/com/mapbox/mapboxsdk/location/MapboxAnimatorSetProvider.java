@@ -29,4 +29,10 @@ class MapboxAnimatorSetProvider {
     locationAnimatorSet.setDuration(duration);
     locationAnimatorSet.start();
   }
+
+  void startSingleAnimation(@NonNull Animator singleAnimation) {
+    AnimatorSet locationAnimatorSet = new AnimatorSet();
+    locationAnimatorSet.play(singleAnimation);
+    locationAnimatorSet.start();
+  }
 }
