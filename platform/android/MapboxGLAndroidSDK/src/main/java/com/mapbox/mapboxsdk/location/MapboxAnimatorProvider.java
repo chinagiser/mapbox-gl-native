@@ -1,6 +1,8 @@
 package com.mapbox.mapboxsdk.location;
 
+import android.animation.ValueAnimator;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
@@ -36,5 +38,22 @@ final class MapboxAnimatorProvider {
                                              MapboxAnimator.AnimationsValueChangeListener updateListener,
                                              @Nullable MapboxMap.CancelableCallback cancelableCallback) {
     return new MapboxCameraAnimatorAdapter(previous, target, updateListener, cancelableCallback);
+  }
+
+  PulsingLocationCircleAnimator pulsingCircleAnimator(MapboxAnimator.AnimationsValueChangeListener updateListener,
+                                                      int maxAnimationFps,
+                                                      float pulseSingleDuration,
+                                                      float pulseMaxRadius,
+                                                      String desiredInterpolatorFromOptions) {
+    PulsingLocationCircleAnimator pulsingLocationCircleAnimator =
+        new PulsingLocationCircleAnimator(updateListener, maxAnimationFps, pulseMaxRadius);
+    Log.d("Mbgl-MapboxAnimatorProvider", "pulsingCircleAnimator: pulseSingleDuration = " + pulseSingleDuration);
+    pulsingLocationCircleAnimator.setDuration((long) pulseSingleDuration);
+    pulsingLocationCircleAnimator.setRepeatMode(ValueAnimator.RESTART);
+    pulsingLocationCircleAnimator.setRepeatCount(ValueAnimator.INFINITE);
+    pulsingLocationCircleAnimator.retrievePulseInterpolator(desiredInterpolatorFromOptions);
+    pulsingLocationCircleAnimator.setInterpolator(
+        pulsingLocationCircleAnimator.retrievePulseInterpolator(desiredInterpolatorFromOptions));
+    return pulsingLocationCircleAnimator;
   }
 }

@@ -43,7 +43,7 @@
             android:textStyle="bold" />
 
         <Button
-            android:id="@+id/button_location_circle_frequency"
+            android:id="@+id/button_location_circle_duration"
             style="?android:attr/buttonBarButtonStyle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"

@@ -11,6 +11,7 @@ import android.support.annotation.Nullable;
 import android.support.annotation.RequiresPermission;
 import android.support.annotation.StyleRes;
 import android.support.annotation.VisibleForTesting;
+import android.util.Log;
 import android.view.WindowManager;
 
 import com.mapbox.android.core.location.LocationEngine;
@@ -718,7 +719,7 @@ public final class LocationComponent {
       locationAnimatorCoordinator.setCompassAnimationEnabled(options.compassAnimationEnabled());
       locationAnimatorCoordinator.setAccuracyAnimationEnabled(options.accuracyAnimationEnabled());
       if (options.pulseEnabled()) {
-        locationAnimatorCoordinator.startPulsing(mapboxMap);
+        locationAnimatorCoordinator.startLocationComponentCirclePulsing();
       }
       updateMapWithOptions(options);
     }
@@ -1149,8 +1150,13 @@ public final class LocationComponent {
     }
   }
 
+  public void stopPulsing() {
+    locationAnimatorCoordinator.cancelPulsingCircleAnimation();
+  }
+
   @SuppressLint("MissingPermission")
   private void onLocationLayerStart() {
+    Log.d(TAG, "onLocationLayerStart: ");
     if (!isComponentInitialized || !isComponentStarted || mapboxMap.getStyle() == null) {
       return;
     }
@@ -1177,10 +1183,16 @@ public final class LocationComponent {
       setLastLocation();
       updateCompassListenerState(true);
       setLastCompassHeading();
+      if (options.pulseEnabled()) {
+        Log.d(TAG, "onLocationLayerStart: options.pulseEnabled()");
+        locationAnimatorCoordinator.startLocationComponentCirclePulsing();
+      }
     }
   }
 
   private void onLocationLayerStop() {
+    Log.d(TAG, "onLocationLayerStop: ");
+
     if (!isComponentInitialized || !isLayerReady || !isComponentStarted) {
       return;
     }
@@ -1233,7 +1245,7 @@ public final class LocationComponent {
       .trackingAnimationDurationMultiplier());
 
     if (options.pulseEnabled()) {
-      locationAnimatorCoordinator.startPulsing(mapboxMap);
+      locationAnimatorCoordinator.startLocationComponentCirclePulsing();
     }
 
     WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);

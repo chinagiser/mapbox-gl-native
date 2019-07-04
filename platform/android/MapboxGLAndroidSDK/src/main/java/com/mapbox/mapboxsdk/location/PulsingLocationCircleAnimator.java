@@ -1,6 +1,5 @@
 package com.mapbox.mapboxsdk.location;
 
-import android.animation.ValueAnimator;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.BounceInterpolator;
 import android.view.animation.DecelerateInterpolator;
@@ -16,21 +15,18 @@ public class PulsingLocationCircleAnimator extends MapboxFloatAnimator {
 
   /**
    *
-   * @param updateListener
-   * @param maxAnimationFps
-   * @param locationComponentOptions the stying options of the LocationComponent pulsing circle
+   * @param updateListener  the {@link AnimationsValueChangeListener} associated with this animator.
+   * @param maxAnimationFps the maximum frames per second that the animator should use. Default
+   *                        is the {@link LocationAnimatorCoordinator#maxAnimationFps} variable.
    */
   public PulsingLocationCircleAnimator(AnimationsValueChangeListener updateListener,
-                                       int maxAnimationFps, LocationComponentOptions locationComponentOptions) {
-    super(0f, LocationComponentOptions.CIRCLE_PULSING_FINAL_RADIUS_DEFAULT, updateListener, maxAnimationFps);
-    setDuration((long) locationComponentOptions.pulseSingleDuration());
-    setRepeatMode(ValueAnimator.RESTART);
-    setRepeatCount(ValueAnimator.INFINITE);
-    setInterpolator(retrievePulseInterpolator(locationComponentOptions.pulseInterpolator()));
+                                       int maxAnimationFps,
+                                       float circleMaxRadius) {
+    super(0f, circleMaxRadius, updateListener, maxAnimationFps);
   }
 
   public Interpolator retrievePulseInterpolator(String desiredInterpolatorFromOptions) {
-    switch(desiredInterpolatorFromOptions){
+    switch (desiredInterpolatorFromOptions) {
       case PulseMode.LINEAR:
         return new LinearInterpolator();
       case PulseMode.ACCELERATE:
