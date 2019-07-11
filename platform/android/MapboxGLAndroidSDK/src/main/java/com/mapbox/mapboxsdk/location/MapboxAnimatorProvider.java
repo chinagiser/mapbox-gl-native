@@ -47,7 +47,6 @@ final class MapboxAnimatorProvider {
                                                       String desiredInterpolatorFromOptions) {
     PulsingLocationCircleAnimator pulsingLocationCircleAnimator =
         new PulsingLocationCircleAnimator(updateListener, maxAnimationFps, pulseMaxRadius);
-    Log.d("Mbgl-MapboxAnimatorProvider", "pulsingCircleAnimator: pulseSingleDuration = " + pulseSingleDuration);
     pulsingLocationCircleAnimator.setDuration((long) pulseSingleDuration);
     pulsingLocationCircleAnimator.setRepeatMode(ValueAnimator.RESTART);
     pulsingLocationCircleAnimator.setRepeatCount(ValueAnimator.INFINITE);

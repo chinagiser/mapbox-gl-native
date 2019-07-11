@@ -3,6 +3,7 @@ package com.mapbox.mapboxsdk.location;
 import android.animation.Animator;
 import android.animation.AnimatorSet;
 import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.animation.Interpolator;
 
 import java.util.List;
@@ -31,6 +32,7 @@ class MapboxAnimatorSetProvider {
   }
 
   void startSingleAnimation(@NonNull Animator singleAnimation) {
+    Log.d("Mbgl-LocationMapboxAnimatorSetProvider", "startSingleAnimation: ");
     AnimatorSet locationAnimatorSet = new AnimatorSet();
     locationAnimatorSet.play(singleAnimation);
     locationAnimatorSet.start();

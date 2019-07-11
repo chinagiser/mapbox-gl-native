@@ -6,6 +6,7 @@ import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
+import android.util.Log;
 import android.util.SparseArray;
 import android.view.animation.LinearInterpolator;
 
@@ -315,6 +316,7 @@ final class LocationAnimatorCoordinator {
   }
 
   private void playPulsingAnimator() {
+    Log.d(TAG, "playPulsingAnimator: ");
     Animator animator = animatorArray.get(ANIMATOR_PULSING_CIRCLE_RADIUS);
     if (animator != null) {
       animatorSetProvider.startSingleAnimation(animator);
@@ -427,9 +429,6 @@ final class LocationAnimatorCoordinator {
       animator.cancel();
       animator.removeAllUpdateListeners();
       animator.removeAllListeners();
-      if (animatorType != ANIMATOR_PULSING_CIRCLE_RADIUS) {
-        animatorArray.put(animatorType, null);
-      }
     }
   }
 

@@ -142,7 +142,6 @@ final class LocationLayerController {
     styleBearing(options);
     styleAccuracy(options.accuracyAlpha(), options.accuracyColor());
     styleScaling(options);
-    styleScaling(options);
     stylePulsingCircle(options);
     determineIconsSource(options);
   }
@@ -399,16 +398,14 @@ final class LocationLayerController {
   }
 
   private void stylePulsingCircle(LocationComponentOptions options) {
-    if (mapboxMap.getStyle() != null) {
-      if (mapboxMap.getStyle().getLayer(PROPERTY_PULSING_CIRCLE_LAYER) != null) {
-        setLayerVisibility(PROPERTY_PULSING_CIRCLE_LAYER, true);
-        mapboxMap.getStyle().getLayer(PROPERTY_PULSING_CIRCLE_LAYER).setProperties(
-          circleRadius(get(PROPERTY_PULSING_RADIUS)),
-          circleColor(options.pulseColor()),
-          circleStrokeColor(options.pulseColor()),
-          circleOpacity(get(PROPERTY_PULSING_OPACITY))
-        );
-      }
+    if (style.getLayer(PROPERTY_PULSING_CIRCLE_LAYER) != null) {
+      setLayerVisibility(PROPERTY_PULSING_CIRCLE_LAYER, true);
+      style.getLayer(PROPERTY_PULSING_CIRCLE_LAYER).setProperties(
+        circleRadius(get(PROPERTY_PULSING_RADIUS)),
+        circleColor(options.pulseColor()),
+        circleStrokeColor(options.pulseColor()),
+        circleOpacity(get(PROPERTY_PULSING_OPACITY))
+      );
     }
   }
 
@@ -520,7 +517,7 @@ final class LocationLayerController {
 
     if (options.pulseEnabled()) {
       holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_PULSING_CIRCLE_RADIUS,
-          pulsingCircleRadiusListener));
+        pulsingCircleRadiusListener));
     }
     return holders;
   }

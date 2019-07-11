@@ -718,9 +718,6 @@ public final class LocationComponent {
       locationAnimatorCoordinator.setTrackingAnimationDurationMultiplier(options.trackingAnimationDurationMultiplier());
       locationAnimatorCoordinator.setCompassAnimationEnabled(options.compassAnimationEnabled());
       locationAnimatorCoordinator.setAccuracyAnimationEnabled(options.accuracyAnimationEnabled());
-      if (options.pulseEnabled()) {
-        locationAnimatorCoordinator.startLocationComponentCirclePulsing();
-      }
       updateMapWithOptions(options);
     }
   }
@@ -1114,6 +1111,7 @@ public final class LocationComponent {
    */
   public void onStart() {
     isComponentStarted = true;
+    Log.d(TAG, "onStart: about to run onLocationLayerStart()");
     onLocationLayerStart();
   }
 
@@ -1135,6 +1133,7 @@ public final class LocationComponent {
    * Internal use.
    */
   public void onStartLoadingMap() {
+    Log.d(TAG, "onStartLoadingMap: about to run onLocationLayerStop()");
     onLocationLayerStop();
   }
 
@@ -1146,6 +1145,7 @@ public final class LocationComponent {
       style = mapboxMap.getStyle();
       locationLayerController.initializeComponents(style, options);
       locationCameraController.initializeOptions(options);
+      Log.d(TAG, "onFinishLoadingStyle: about to run onLocationLayerStart()");
       onLocationLayerStart();
     }
   }
@@ -1244,10 +1244,6 @@ public final class LocationComponent {
     locationAnimatorCoordinator.setTrackingAnimationDurationMultiplier(options
       .trackingAnimationDurationMultiplier());
 
-    if (options.pulseEnabled()) {
-      locationAnimatorCoordinator.startLocationComponentCirclePulsing();
-    }
-
     WindowManager windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
     SensorManager sensorManager = (SensorManager) context.getSystemService(Context.SENSOR_SERVICE);
     if (windowManager != null && sensorManager != null) {
@@ -1260,6 +1256,7 @@ public final class LocationComponent {
     setRenderMode(RenderMode.NORMAL);
     setCameraMode(CameraMode.NONE);
 
+    Log.d(TAG, "initialize: about to run onLocationLayerStart()");
     onLocationLayerStart();
   }
 
@@ -1304,11 +1301,13 @@ public final class LocationComponent {
 
   private void enableLocationComponent() {
     isEnabled = true;
+    Log.d(TAG, "enableLocationComponent: about to run onLocationLayerStart()");
     onLocationLayerStart();
   }
 
   private void disableLocationComponent() {
     isEnabled = false;
+    Log.d(TAG, "disableLocationComponent: about to run onLocationLayerStop()");
     onLocationLayerStop();
   }
 
