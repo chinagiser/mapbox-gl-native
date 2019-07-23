@@ -583,9 +583,11 @@ double Transform::getMaxPitchForEdgeInsets(const EdgeInsets &insets) const
     double centerOffsetY = 0.5 * (insets.top() - insets.bottom()); // See TransformState::getCenterOffset.
 
     const auto height = state.size.height;
+    assert(height);
     // See TransformState::fov description: fov = 2 * arctan((height / 2) / (height * 1.5)).
-    const double fovAboveCenter = std::atan((height * 0.5 + centerOffsetY) / (height * 1.5));
-    return M_PI * 0.5 - fovAboveCenter - 0.001; // 0.001 prevents parallel ground to viewport clipping plane.
+    const double fovAboveCenter = std::atan((0.666666 + 0.02) * (0.5 + centerOffsetY / height));
+    return M_PI * 0.5 - fovAboveCenter;   // 0.02 added ^^^^ to prevent parallel ground to viewport clipping plane.
+    // e.g. Maximum pitch of 60 degrees is when perspective center's offset from the top is 84% of screen height.
 }
 
 } // namespace mbgl

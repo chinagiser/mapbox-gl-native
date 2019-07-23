@@ -36,11 +36,12 @@ void TransformState::getProjMatrix(mat4& projMatrix, uint16_t nearZ, bool aligne
     const double cameraToCenterDistance = getCameraToCenterDistance();
     auto offset = getCenterOffset();
 
-    // Find the distance from the viewport center point
-    // [width/2 + offset.x, height/2 + offset.y] to the top edge, to point
-    // [width/2 + offset.x, 0] in Z units, using the law of sines.
+    // Find the Z distance from the viewport center point
+    // [width/2 + offset.x, height/2 + offset.y] to the top edge; to point
+    // [width/2 + offset.x, 0] in Z units.
     // 1 Z unit is equivalent to 1 horizontal px at the center of the map
     // (the distance between[width/2, height/2] and [width/2 + 1, height/2])
+    // See https://github.com/mapbox/mapbox-gl-native/pull/15195 for details.
     // See TransformState::fov description: fov = 2 * arctan((height / 2) / (height * 1.5)).
     const double tanFovAboveCenter = (size.height * 0.5 + offset.y) / (size.height * 1.5);
     const double tanMultiple = tanFovAboveCenter * std::tan(getPitch());

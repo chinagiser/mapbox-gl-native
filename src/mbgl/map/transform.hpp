@@ -116,7 +116,6 @@ private:
                          const Duration&);
 
     // We don't want to show horizon: limit max pitch based on edge insets.
-    // e.g. for 60 deg pitch, top - bottom insets should be less than 0.732 of screen height.
     double getMaxPitchForEdgeInsets(const EdgeInsets &insets) const;
 
     TimePoint transitionStart;
