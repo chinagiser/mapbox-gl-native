@@ -10,6 +10,7 @@ import com.mapbox.mapboxsdk.maps.MapboxMap;
 final class MapboxAnimatorProvider {
 
   private static MapboxAnimatorProvider INSTANCE;
+  private String TAG = "Mbgl-MapboxAnimatorProvider";
 
   private MapboxAnimatorProvider() {
     // private constructor
@@ -47,6 +48,7 @@ final class MapboxAnimatorProvider {
                                                       String desiredInterpolatorFromOptions) {
     PulsingLocationCircleAnimator pulsingLocationCircleAnimator =
         new PulsingLocationCircleAnimator(updateListener, maxAnimationFps, pulseMaxRadius);
+    Log.d(TAG, "pulsingCircleAnimator: pulseSingleDuration = " + pulseSingleDuration);
     pulsingLocationCircleAnimator.setDuration((long) pulseSingleDuration);
     pulsingLocationCircleAnimator.setRepeatMode(ValueAnimator.RESTART);
     pulsingLocationCircleAnimator.setRepeatCount(ValueAnimator.INFINITE);

@@ -467,6 +467,12 @@ public final class LocationComponent {
       }
       options = LocationComponentOptions.createFromAttributes(activationOptions.context(), styleRes);
     }
+    Log.d(TAG, "activateLocationComponent: options.pulseInterpolator() = " + options.pulseInterpolator());
+    Log.d(TAG, "activateLocationComponent: options.pulseMaxRadius() = " + options.pulseMaxRadius());
+    Log.d(TAG, "activateLocationComponent: options.pulseAlpha() = " + options.pulseAlpha());
+    Log.d(TAG, "activateLocationComponent: options.pulseColor() = " + options.pulseColor());
+    Log.d(TAG, "activateLocationComponent: options.pulseEnabled() = " + options.pulseEnabled());
+    Log.d(TAG, "activateLocationComponent: options.pulseSingleDuration() = " + options.pulseSingleDuration());
 
     // Initialize the LocationComponent with Context, the map's `Style`, and either custom LocationComponentOptions
     // or backup options created from default/custom attributes
@@ -718,6 +724,17 @@ public final class LocationComponent {
       locationAnimatorCoordinator.setTrackingAnimationDurationMultiplier(options.trackingAnimationDurationMultiplier());
       locationAnimatorCoordinator.setCompassAnimationEnabled(options.compassAnimationEnabled());
       locationAnimatorCoordinator.setAccuracyAnimationEnabled(options.accuracyAnimationEnabled());
+      if (options.pulseEnabled()) {
+        Log.d(TAG, "applyStyle: options.pulseEnabled()");
+        Log.d(TAG, "applyStyle: options.pulseInterpolator() = " + options.pulseInterpolator());
+        Log.d(TAG, "applyStyle: options.pulseMaxRadius() = " + options.pulseMaxRadius());
+        Log.d(TAG, "applyStyle: options.pulseAlpha() = " + options.pulseAlpha());
+        Log.d(TAG, "applyStyle: options.pulseColor() = " + options.pulseColor());
+        Log.d(TAG, "applyStyle: options.pulseEnabled() = " + options.pulseEnabled());
+        Log.d(TAG, "applyStyle: options.pulseSingleDuration() = " + options.pulseSingleDuration());
+
+        locationAnimatorCoordinator.startLocationComponentCirclePulsing(options);
+      }
       updateMapWithOptions(options);
     }
   }
@@ -1111,7 +1128,6 @@ public final class LocationComponent {
    */
   public void onStart() {
     isComponentStarted = true;
-    Log.d(TAG, "onStart: about to run onLocationLayerStart()");
     onLocationLayerStart();
   }
 
@@ -1133,7 +1149,6 @@ public final class LocationComponent {
    * Internal use.
    */
   public void onStartLoadingMap() {
-    Log.d(TAG, "onStartLoadingMap: about to run onLocationLayerStop()");
     onLocationLayerStop();
   }
 
@@ -1156,7 +1171,6 @@ public final class LocationComponent {
 
   @SuppressLint("MissingPermission")
   private void onLocationLayerStart() {
-    Log.d(TAG, "onLocationLayerStart: ");
     if (!isComponentInitialized || !isComponentStarted || mapboxMap.getStyle() == null) {
       return;
     }
@@ -1183,16 +1197,10 @@ public final class LocationComponent {
       setLastLocation();
       updateCompassListenerState(true);
       setLastCompassHeading();
-      if (options.pulseEnabled()) {
-        Log.d(TAG, "onLocationLayerStart: options.pulseEnabled()");
-        locationAnimatorCoordinator.startLocationComponentCirclePulsing();
-      }
     }
   }
 
   private void onLocationLayerStop() {
-    Log.d(TAG, "onLocationLayerStop: ");
-
     if (!isComponentInitialized || !isLayerReady || !isComponentStarted) {
       return;
     }
@@ -1214,8 +1222,13 @@ public final class LocationComponent {
   private void initialize(@NonNull final Context context, @NonNull Style style,
                           @NonNull final LocationComponentOptions options) {
     if (isComponentInitialized) {
+/*      if (options.pulseEnabled()) {
+        Log.d(TAG, "initialize: options.pulseEnabled()");
+        locationAnimatorCoordinator.startLocationComponentCirclePulsing();
+      }*/
       return;
     }
+    Log.d(TAG, "initialize: made it beyond return if (isComponentInitialized) ");
     isComponentInitialized = true;
 
     if (!style.isFullyLoaded()) {
@@ -1256,7 +1269,10 @@ public final class LocationComponent {
     setRenderMode(RenderMode.NORMAL);
     setCameraMode(CameraMode.NONE);
 
-    Log.d(TAG, "initialize: about to run onLocationLayerStart()");
+/*    if (options.pulseEnabled()) {
+      Log.d(TAG, "initialize: options.pulseEnabled()");
+      locationAnimatorCoordinator.startLocationComponentCirclePulsing();
+    }*/
     onLocationLayerStart();
   }
 

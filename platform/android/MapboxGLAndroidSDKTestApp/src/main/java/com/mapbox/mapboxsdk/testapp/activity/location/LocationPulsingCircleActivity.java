@@ -35,26 +35,26 @@ import java.util.List;
 
 public class LocationPulsingCircleActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-  private MapView mapView;
-  private Button pulsingCircleDurationButton;
-  private Button pulsingCircleColorButton;
-
-  private PermissionsManager permissionsManager;
-
-  private LocationComponent locationComponent;
-  private MapboxMap mapboxMap;
-  private float currentPulseDuration;
 
   private static final String SAVED_STATE_LOCATION = "saved_state_location";
-  private static final String TAG = "LocationPulsingCircleActivity";
+  private static final String TAG = "Mbgl-LocationPulsingCircleActivity";
 
   private static final float DEFAULT_LOCATION_CIRCLE_PULSE_DURATION_MS = 2300;
+  private static final float SECOND_LOCATION_CIRCLE_PULSE_DURATION_MS = 800;
+  private static final float THIRD_LOCATION_CIRCLE_PULSE_DURATION_MS = 8000;
   private static final float DEFAULT_LOCATION_CIRCLE_PULSE_RADIUS = 35;
   private static final float DEFAULT_LOCATION_CIRCLE_PULSE_ALPHA = .55f;
   private static final String DEFAULT_LOCATION_CIRCLE_INTERPOLATOR_PULSE_MODE = PulseMode.DECELERATE;
   private static final boolean DEFAULT_LOCATION_CIRCLE_PULSE_FADE_MODE = true;
   private static int LOCATION_CIRCLE_PULSE_COLOR;
   private Location lastLocation;
+  private MapView mapView;
+  private Button pulsingCircleDurationButton;
+  private Button pulsingCircleColorButton;
+  private PermissionsManager permissionsManager;
+  private LocationComponent locationComponent;
+  private MapboxMap mapboxMap;
+  private float currentPulseDuration;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -124,10 +124,7 @@ public class LocationPulsingCircleActivity extends AppCompatActivity implements 
                                                                  @Nullable float pulsingCircleDuration,
                                                                  @Nullable float pulsingCircleMaxRadius
   ) {
-    Log.d(TAG, "buildLocationComponentOptions: pulsingCircleDuration = " + pulsingCircleDuration);
-
     currentPulseDuration = pulsingCircleDuration;
-    Log.d(TAG, "buildLocationComponentOptions: currentPulseDuration = " + currentPulseDuration);
     return LocationComponentOptions.builder(this)
         .layerBelow(idOfLayerBelow)
         .pulsingCircleEnabled(true)
@@ -154,6 +151,7 @@ public class LocationPulsingCircleActivity extends AppCompatActivity implements 
                     newPulsingDuration,
                     DEFAULT_LOCATION_CIRCLE_PULSE_RADIUS))
         );
+        Log.d(TAG, "onStyleLoaded: activateLocationComponent()");
       }
     });
   }
@@ -237,9 +235,9 @@ public class LocationPulsingCircleActivity extends AppCompatActivity implements 
 
   private void showDurationListDialog() {
     List<String> modes = new ArrayList<>();
-    modes.add(String.valueOf(DEFAULT_LOCATION_CIRCLE_PULSE_DURATION_MS));
-    modes.add("800ms");
-    modes.add("4000ms");
+    modes.add(String.format("%sms", String.valueOf(DEFAULT_LOCATION_CIRCLE_PULSE_DURATION_MS)));
+    modes.add(String.format("%sms", String.valueOf(SECOND_LOCATION_CIRCLE_PULSE_DURATION_MS)));
+    modes.add(String.format("%sms", String.valueOf(THIRD_LOCATION_CIRCLE_PULSE_DURATION_MS)));
     ArrayAdapter<String> profileAdapter = new ArrayAdapter<>(this,
         android.R.layout.simple_list_item_1, modes);
     ListPopupWindow listPopup = new ListPopupWindow(this);
@@ -251,10 +249,12 @@ public class LocationPulsingCircleActivity extends AppCompatActivity implements 
       if (selectedMode.contentEquals(String.format("%sms",
           String.valueOf(DEFAULT_LOCATION_CIRCLE_PULSE_DURATION_MS)))) {
         setNewLocationComponentOptions(DEFAULT_LOCATION_CIRCLE_PULSE_DURATION_MS, LOCATION_CIRCLE_PULSE_COLOR);
-      } else if (selectedMode.contentEquals("800ms")) {
-        setNewLocationComponentOptions(800, LOCATION_CIRCLE_PULSE_COLOR);
-      } else if (selectedMode.contentEquals("4000ms")) {
-        setNewLocationComponentOptions(4000, LOCATION_CIRCLE_PULSE_COLOR);
+      } else if (selectedMode.contentEquals(String.format("%sms",
+        String.valueOf(SECOND_LOCATION_CIRCLE_PULSE_DURATION_MS)))) {
+        setNewLocationComponentOptions(SECOND_LOCATION_CIRCLE_PULSE_DURATION_MS, LOCATION_CIRCLE_PULSE_COLOR);
+      } else if (selectedMode.contentEquals(String.format("%sms",
+        String.valueOf(THIRD_LOCATION_CIRCLE_PULSE_DURATION_MS)))) {
+        setNewLocationComponentOptions(THIRD_LOCATION_CIRCLE_PULSE_DURATION_MS, LOCATION_CIRCLE_PULSE_COLOR);
       }
       listPopup.dismiss();
     });
@@ -303,24 +303,28 @@ public class LocationPulsingCircleActivity extends AppCompatActivity implements 
   @Override
   protected void onStart() {
     super.onStart();
+    Log.d(TAG, "LocationPulsingCircleActivity onStart: ");
     mapView.onStart();
   }
 
   @Override
   protected void onResume() {
     super.onResume();
+    Log.d(TAG, "LocationPulsingCircleActivity onResume: ");
     mapView.onResume();
   }
 
   @Override
   protected void onPause() {
     super.onPause();
+    Log.d(TAG, "LocationPulsingCircleActivity onPause: ");
     mapView.onPause();
   }
 
   @Override
   protected void onStop() {
     super.onStop();
+    Log.d(TAG, "LocationPulsingCircleActivity onStop: ");
     mapView.onStop();
   }
 
@@ -328,6 +332,7 @@ public class LocationPulsingCircleActivity extends AppCompatActivity implements 
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
+    Log.d(TAG, "LocationPulsingCircleActivity onSaveInstanceState: ");
     mapView.onSaveInstanceState(outState);
     if (locationComponent != null) {
       outState.putParcelable(SAVED_STATE_LOCATION, locationComponent.getLastKnownLocation());
@@ -337,12 +342,14 @@ public class LocationPulsingCircleActivity extends AppCompatActivity implements 
   @Override
   protected void onDestroy() {
     super.onDestroy();
+    Log.d(TAG, "LocationPulsingCircleActivity onDestroy: ");
     mapView.onDestroy();
   }
 
   @Override
   public void onLowMemory() {
     super.onLowMemory();
+    Log.d(TAG, "LocationPulsingCircleActivity onLowMemory: ");
     mapView.onLowMemory();
   }
 }

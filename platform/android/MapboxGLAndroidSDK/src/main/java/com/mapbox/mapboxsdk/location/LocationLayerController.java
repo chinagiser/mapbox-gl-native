@@ -6,7 +6,6 @@ import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
-import android.util.Log;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -14,6 +13,7 @@ import com.mapbox.geojson.Feature;
 import com.mapbox.geojson.Point;
 import com.mapbox.mapboxsdk.geometry.LatLng;
 import com.mapbox.mapboxsdk.location.modes.RenderMode;
+import com.mapbox.mapboxsdk.log.Logger;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.Style;
 import com.mapbox.mapboxsdk.style.layers.Layer;
@@ -48,8 +48,8 @@ import static com.mapbox.mapboxsdk.location.LocationComponentConstants.PROPERTY_
 import static com.mapbox.mapboxsdk.location.LocationComponentConstants.PROPERTY_GPS_BEARING;
 import static com.mapbox.mapboxsdk.location.LocationComponentConstants.PROPERTY_LOCATION_STALE;
 import static com.mapbox.mapboxsdk.location.LocationComponentConstants.PROPERTY_PULSING_CIRCLE_LAYER;
-import static com.mapbox.mapboxsdk.location.LocationComponentConstants.PROPERTY_PULSING_RADIUS;
 import static com.mapbox.mapboxsdk.location.LocationComponentConstants.PROPERTY_PULSING_OPACITY;
+import static com.mapbox.mapboxsdk.location.LocationComponentConstants.PROPERTY_PULSING_RADIUS;
 import static com.mapbox.mapboxsdk.location.LocationComponentConstants.PROPERTY_SHADOW_ICON_OFFSET;
 import static com.mapbox.mapboxsdk.location.LocationComponentConstants.SHADOW_ICON;
 import static com.mapbox.mapboxsdk.location.LocationComponentConstants.SHADOW_LAYER;
@@ -516,6 +516,7 @@ final class LocationLayerController {
     }
 
     if (options.pulseEnabled()) {
+      Logger.d(TAG, "getAnimationListeners(): options.pulseEnabled()");
       holders.add(new AnimatorListenerHolder(MapboxAnimator.ANIMATOR_PULSING_CIRCLE_RADIUS,
         pulsingCircleRadiusListener));
     }

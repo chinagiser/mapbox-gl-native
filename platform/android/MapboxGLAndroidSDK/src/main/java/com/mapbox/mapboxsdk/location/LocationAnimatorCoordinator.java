@@ -53,7 +53,6 @@ final class LocationAnimatorCoordinator {
   private final MapboxAnimatorSetProvider animatorSetProvider;
   private boolean compassAnimationEnabled;
   private boolean accuracyAnimationEnabled;
-  private PulsingLocationCircleAnimator pulsingLocationCircleAnimator;
   private LocationComponentOptions locationComponentOptions;
 
   @VisibleForTesting
@@ -141,9 +140,21 @@ final class LocationAnimatorCoordinator {
     this.previousAccuracyRadius = targetAccuracyRadius;
   }
 
-  void startLocationComponentCirclePulsing() {
+  void startLocationComponentCirclePulsing(LocationComponentOptions options) {
+    Log.d(TAG, "startLocationComponentCirclePulsing: ");
     cancelAnimator(ANIMATOR_PULSING_CIRCLE_RADIUS);
     MapboxAnimator.AnimationsValueChangeListener listener = listeners.get(ANIMATOR_PULSING_CIRCLE_RADIUS);
+    locationComponentOptions = options;
+    if (locationComponentOptions != null) {
+      Log.d(TAG, "startLocationComponentCirclePulsing: locationComponentOptions != null");
+      Log.d(TAG, "startLocationComponentCirclePulsing: locationComponentOptions duration = " + locationComponentOptions.pulseSingleDuration());
+      Log.d(TAG, "startLocationComponentCirclePulsing: locationComponentOptions pulseMaxRadius = " + locationComponentOptions.pulseMaxRadius());
+      Log.d(TAG, "startLocationComponentCirclePulsing: locationComponentOptions pulseInterpolator = " + locationComponentOptions.pulseInterpolator());
+
+    } else {
+      Log.d(TAG, "startLocationComponentCirclePulsing: locationComponentOptions == null");
+    }
+
     PulsingLocationCircleAnimator pulsingLocationCircleAnimator = animatorProvider.pulsingCircleAnimator(
         listener,
         maxAnimationFps,
@@ -173,9 +184,7 @@ final class LocationAnimatorCoordinator {
     MapboxAnimator latLngAnimator = animatorArray.get(ANIMATOR_LAYER_LATLNG);
     if (latLngAnimator != null) {
       previousLatLng = (LatLng) latLngAnimator.getAnimatedValue();
-    } else {
-      previousLatLng = new LatLng(previousLocation);
-    }
+    } else previousLatLng = new LatLng(previousLocation);
     return previousLatLng;
   }
 
