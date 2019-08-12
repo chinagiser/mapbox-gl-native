@@ -16,14 +16,21 @@
 #include <cassert>
 #include <utility>
 
+// add by chinagiser.net 20190726
+#include <map>
+#include <mbgl/storage/sqlite3.hpp>
+#include <fstream>
+
+
 namespace mbgl {
+
 
 class DefaultFileSource::Impl {
 public:
     Impl(std::shared_ptr<FileSource> assetFileSource_, std::string cachePath)
             : assetFileSource(std::move(assetFileSource_))
             , localFileSource(std::make_unique<LocalFileSource>())
-            , offlineDatabase(std::make_unique<OfflineDatabase>(std::move(cachePath))) {
+            , offlineDatabase(std::make_unique<OfflineDatabase>(std::move(cachePath))){
     }
 
     void setAPIBaseURL(const std::string& url) {
@@ -103,6 +110,171 @@ public:
         }
     }
 
+    // add by chinagiser.net 20190726
+    void requestMbtilesTile(const Resource& resource, Callback callback){
+        const std::string mbtilesProtocol = "mbtiles://";
+        if (resource.kind == Resource::Kind::Tile) {
+            assert(resource.tileData);
+
+            const std::string dbKey = resource.tileData->urlTemplate;
+            std::string mbtilePath = dbKey.substr(mbtilesProtocol.size());
+
+            std::shared_ptr<mapbox::sqlite::Database> db;
+            auto tuple = mbtilesDbs.find(dbKey);
+            if (tuple != mbtilesDbs.end()) {
+                db = tuple->second;
+            }
+            if (!db) {
+                db = std::make_shared<mapbox::sqlite::Database>(mapbox::sqlite::Database::open(mbtilePath, mapbox::sqlite::ReadWriteCreate));
+                db->setBusyTimeout(Milliseconds::max());
+                mbtilesDbs[dbKey] = db;
+            }
+            std::unique_ptr<mapbox::sqlite::Statement> statement = std::make_unique<mapbox::sqlite::Statement>(*db, "select tile_data from tiles where tile_column=?1 and tile_row=?2 and zoom_level=?3");
+
+            mapbox::sqlite::Query query {*statement};
+            query.bind(1, resource.tileData->x);
+            query.bind(2, resource.tileData->y);
+            query.bind(3, resource.tileData->z);
+
+            Response mbtilesResponse;
+            if (!query.run()) {
+                mbtilesResponse.noContent = true;
+                callback(mbtilesResponse);
+            }else{
+                optional<std::string> queryData = query.get<optional<std::string>>(0);
+                if (!queryData) {
+                    mbtilesResponse.noContent = true;
+                } else {
+                    mbtilesResponse.data = std::make_shared<std::string>(*queryData);
+                }
+                callback(mbtilesResponse);
+            }
+        }
+    }
+
+    std::string toHex(int num) {
+        std::string HEX = "0123456789abcdef";
+        if (num == 0) return "0";
+        std::string result;
+        int count = 0;
+        while (num && count++ < 8) {
+            result = HEX[(num & 0xf)] + result;
+            num >>= 4;
+        }
+        return result;
+    }
+
+    // add by chinagiser.net 20190729
+    void requestEsriBundle2Tile(const Resource& resource, Callback callback){
+        const std::string protocol = "esribundle2://";
+        if (resource.kind == Resource::Kind::Tile) {
+            assert(resource.tileData);
+
+            std::string level = std::to_string(resource.tileData->z);
+            int levelLength = level.size();
+            if(1 == levelLength){
+                level = "0" + level;
+            }
+            level = "L" + level;
+            int r = resource.tileData->y;
+            int c = resource.tileData->x;
+
+            // bundle file name row part;
+            int rowGroup = 128*(r/128);
+            std::string row = toHex(rowGroup);
+            int rowLength = row.size();
+            if(rowLength < 4){
+                for (int i = 0; i < 4 - rowLength; i++) {
+                    row = "0" + row;
+                }
+            }
+            row = "R" + row;
+
+            // bundle file name col part
+            int columnGroup = 128 * (c/128);
+            std::string column = toHex(columnGroup);
+            int columnLength = column.size();
+            if(columnLength < 4){
+                for (int i = 0; i < 4 - columnLength; i++) {
+                    column = "0" + column;
+                }
+            }
+            column = "C" + column;
+
+            std::string dataPath = resource.tileData->urlTemplate;
+            dataPath = dataPath.substr(protocol.size());
+            const std::string bundleFilePath = dataPath + "/" + level + "/" + row + column + ".bundle";
+            const std::string bundlxFilePath = dataPath + "/" + level + "/" + row + column + ".bundlx";
+
+            std::ifstream bundleFile(bundleFilePath, std::ifstream::binary);
+            std::ifstream bundlxFile(bundlxFilePath, std::ifstream::binary);
+
+            if(!bundleFile.is_open() || !bundlxFile.is_open()){
+                Response response;
+                response.noContent = true;
+                callback(response);
+            }else{
+
+                int indexOffset = (c-columnGroup)*128 + (r-rowGroup);
+
+                // read bundlx file
+                char buffer[5];
+                bundlxFile.seekg(16+5*indexOffset, bundlxFile.beg);
+                bundlxFile.read(buffer, 5);
+
+                long dataOffset = (long)(buffer[0] & 0xff)
+                                  + (long)(buffer[1] & 0xff) * 256
+                                  + (long)(buffer[2] & 0xff) * 65536
+                                  + (long)(buffer[3] & 0xff) * 16777216
+                                  + (long)(buffer[4] & 0xff) * 4294967296L;
+                // read bundle file
+                bundleFile.seekg(dataOffset, bundleFile.beg);
+                char lenBts[4];
+                bundleFile.read(lenBts, 4);
+
+                int len = (int)(lenBts[3] & 0xff) * 256 * 256 * 256
+                          + (int)(lenBts[2] & 0xff) * 256 * 256
+                          + (int)(lenBts[1] & 0xff) * 256
+                          + (int)(lenBts[0] & 0xff);
+
+                if(len == 0){
+                    Response response;
+                    response.noContent = true;
+                    callback(response);
+                }else{
+                    char *data = new char[len];
+                    bundleFile.read((char *)data, len);
+                    //int readCount = bundleFile.gcount();
+
+                    std::string resData;
+                    for (int i = 0; i < len; i++) {
+                        char temp = data[i];
+                        resData += temp;
+                    }
+                    //int dataSize = resData.size();
+
+                    Response response;
+                    response.data = std::make_shared<std::string>(resData);
+                    callback(response);
+                }
+
+                bundleFile.close();
+                bundlxFile.close();
+            }
+        }
+    }
+
+    void requestEsriBundle3Tile(const Resource& resource, Callback callback){
+        const std::string protocol = "esribundle3://";
+        if (resource.kind == Resource::Kind::Tile) {
+            assert(resource.tileData);
+
+            Response response;
+
+            callback(response);
+        }
+    }
+
     void request(AsyncRequest* req, Resource resource, ActorRef<FileSourceRequest> ref) {
         auto callback = [ref] (const Response& res) {
             ref.invoke(&FileSourceRequest::setResponse, res);
@@ -114,7 +286,16 @@ public:
         } else if (LocalFileSource::acceptsURL(resource.url)) {
             //Local file request
             tasks[req] = localFileSource->request(resource, callback);
-        } else {
+        } else if(LocalFileSource::acceptsMbtilesURL(resource.url)){// add by chinagiser.net 20190726
+            // Local mbtiles request
+            requestMbtilesTile(resource, callback);
+        }else if(LocalFileSource::acceptsEsriBundle2URL(resource.url)){// add by chinagiser.net 20190729
+            // Local esri arcgis10.2 bundle request
+            requestEsriBundle2Tile(resource, callback);
+        }else if(LocalFileSource::acceptsEsriBundle3URL(resource.url)){// add by chinagiser.net 20190729
+            // Local esri arcgis10.2 bundle request
+            requestEsriBundle3Tile(resource, callback);
+        }  else {
             // Try the offline database
             if (resource.hasLoadingMethod(Resource::LoadingMethod::Cache)) {
                 auto offlineResponse = offlineDatabase->get(resource);
@@ -200,6 +381,7 @@ public:
         callback(offlineDatabase->setMaximumAmbientCacheSize(size));
     }
 
+
 private:
     expected<OfflineDownload*, std::exception_ptr> getDownload(int64_t regionID) {
         auto it = downloads.find(regionID);
@@ -222,6 +404,9 @@ private:
     OnlineFileSource onlineFileSource;
     std::unordered_map<AsyncRequest*, std::unique_ptr<AsyncRequest>> tasks;
     std::unordered_map<int64_t, std::unique_ptr<OfflineDownload>> downloads;
+
+    std::map<std::string, std::shared_ptr<mapbox::sqlite::Database>> mbtilesDbs;
+
 };
 
 DefaultFileSource::DefaultFileSource(const std::string& cachePath, const std::string& assetPath, bool supportCacheOnlyRequests_)
@@ -278,8 +463,8 @@ void DefaultFileSource::setResourceCachePath(const std::string& path, optional<A
 
 std::unique_ptr<AsyncRequest> DefaultFileSource::request(const Resource& resource, Callback callback) {
     auto req = std::make_unique<FileSourceRequest>(std::move(callback));
-
     req->onCancel([fs = impl->actor(), req = req.get()] () { fs.invoke(&Impl::cancel, req); });
+
 
     impl->actor().invoke(&Impl::request, req.get(), resource, req->actor());
 

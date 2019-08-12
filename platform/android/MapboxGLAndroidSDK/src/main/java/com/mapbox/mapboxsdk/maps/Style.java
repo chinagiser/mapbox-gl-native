@@ -1147,4 +1147,10 @@ public class Style {
    * may change as we improve the style.
    */
   public static final String TRAFFIC_NIGHT = "mapbox://styles/mapbox/traffic-night-v2";
+
+  // add by chinagiser.net 20190726 begin
+  public static final  String PROTOCOL_HTTP = "http://";
+  public static final  String PROTOCOL_FILE = "file://";
+  public static final  String PROTOCOL_ASSET = "asset://";
+  
 }

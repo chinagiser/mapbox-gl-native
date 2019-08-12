@@ -10,6 +10,15 @@ import com.mapbox.mapboxsdk.utils.ThreadUtils;
  */
 public abstract class Source {
 
+  // add by chinagiser.net 20190726 begin
+  public static final  String PROTOCOL_HTTP = "http://";
+  public static final  String PROTOCOL_FILE = "file://";
+  public static final  String PROTOCOL_ASSET = "asset://";
+  public static final  String PROTOCOL_MBTILES = "mbtiles://";
+  public static final  String PROTOCOL_ESRI_BUNDLE_102 = "esribundle2://";
+  public static final  String PROTOCOL_ESRI_BUNDLE_103 = "esribundle3://";
+  // end
+
   private static final String TAG = "Mbgl-Source";
 
   @Keep

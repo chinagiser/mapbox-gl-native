@@ -9,6 +9,11 @@
 namespace {
 
 const std::string fileProtocol = "file://";
+// add by chinagiser.net 20190726
+const std::string mbtilesProtocol = "mbtiles://";
+// add by chinagiser.net 20190729
+const std::string esriBundle2Protocol = "esribundle2://";
+const std::string esriBundle3Protocol = "esribundle3://";
 
 } // namespace
 
@@ -49,6 +54,18 @@ std::unique_ptr<AsyncRequest> LocalFileSource::request(const Resource& resource,
 
 bool LocalFileSource::acceptsURL(const std::string& url) {
     return 0 == url.rfind(fileProtocol, 0);
+}
+
+// add by chinagiser.net 20190726
+bool LocalFileSource::acceptsMbtilesURL(const std::string& url) {
+    return 0 == url.rfind(mbtilesProtocol, 0);
+}
+// add by chinagiser.net 20190729
+bool LocalFileSource::acceptsEsriBundle2URL(const std::string& url){
+    return 0 == url.rfind(esriBundle2Protocol, 0);
+}
+bool LocalFileSource::acceptsEsriBundle3URL(const std::string& url){
+    return 0 == url.rfind(esriBundle3Protocol, 0);
 }
 
 } // namespace mbgl

@@ -17,6 +17,12 @@ public:
 
     static bool acceptsURL(const std::string& url);
 
+    // add by chinagiser.net 20190726
+    static bool acceptsMbtilesURL(const std::string& url);
+    // add by chinagiser.net 20190729
+    static bool acceptsEsriBundle2URL(const std::string& url);
+    static bool acceptsEsriBundle3URL(const std::string& url);
+
 private:
     class Impl;
 
