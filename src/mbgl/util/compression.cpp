@@ -100,5 +100,41 @@ std::string decompress(const std::string &raw) {
 
     return result;
 }
+
+// add by chinagiser.net 20190818
+std::string decompressWithHeader(const std::string &raw) {
+    z_stream inflate_stream;
+    memset(&inflate_stream, 0, sizeof(inflate_stream));
+
+    // TODO: reuse z_streams
+    if (inflateInit2(&inflate_stream, MAX_WBITS+16) != Z_OK) {
+        throw std::runtime_error("failed to initialize inflate");
+    }
+
+    inflate_stream.next_in = (Bytef *)raw.data();
+    inflate_stream.avail_in = uInt(raw.size());
+
+    std::string result;
+    char out[15384];
+
+    int code;
+    do {
+        inflate_stream.next_out = reinterpret_cast<Bytef *>(out);
+        inflate_stream.avail_out = sizeof(out);
+        code = inflate(&inflate_stream, 0);
+        // result.append(out, sizeof(out) - inflate_stream.avail_out);
+        if (result.size() < inflate_stream.total_out) {
+            result.append(out, inflate_stream.total_out - result.size());
+        }
+    } while (code == Z_OK);
+
+    inflateEnd(&inflate_stream);
+
+    if (code != Z_STREAM_END) {
+        throw std::runtime_error(inflate_stream.msg ? inflate_stream.msg : "decompression error");
+    }
+
+    return result;
+}
 } // namespace util
 } // namespace mbgl

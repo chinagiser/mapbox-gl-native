@@ -115,6 +115,9 @@ public class LocationComponentOptions implements Parcelable {
   private boolean compassAnimationEnabled;
   private boolean accuracyAnimationEnabled;
 
+  private float deltaNorth = 0.0f;
+  private float deltaEast = 0.0f;
+
   public LocationComponentOptions(
     float accuracyAlpha,
     int accuracyColor,
@@ -332,6 +335,12 @@ public class LocationComponentOptions implements Parcelable {
     return LocationComponentOptions.createFromAttributes(context,
       R.style.mapbox_LocationComponent).toBuilder();
   }
+
+  public float getDeltaNorth(){return this.deltaNorth; }
+  public void setDeltaNorth(float deltaNorth){this.deltaNorth = deltaNorth;}
+
+  public float getDeltaEast(){return this.deltaEast;}
+  public void setDeltaEast(float deltaEast){this.deltaEast = deltaEast;}
 
   /**
    * Set the opacity of the accuracy view to a value from 0 to 1, where 0 means the accuracy view is

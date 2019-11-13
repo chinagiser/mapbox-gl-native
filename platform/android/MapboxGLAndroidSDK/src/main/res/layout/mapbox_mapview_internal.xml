@@ -24,12 +24,4 @@
         android:focusable="true"
         android:contentDescription="@string/mapbox_attributionsIconContentDescription"/>
 
-    <!-- add by chinagiser.net -->
-    <TextView
-        android:id="@+id/companyView"
-        android:text="Publish by 元图科技 base on Mapbox"
-        android:layout_gravity="center|bottom"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="#2196F3"/>
 </merge>

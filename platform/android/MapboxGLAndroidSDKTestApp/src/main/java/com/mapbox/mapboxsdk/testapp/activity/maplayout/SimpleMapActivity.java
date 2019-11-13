@@ -1,22 +1,34 @@
 package com.mapbox.mapboxsdk.testapp.activity.maplayout;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.view.MenuItem;
+
+import com.mapbox.mapboxsdk.camera.CameraUpdateFactory;
+import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.geometry.LatLngBounds;
 import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.maps.Style;
+import com.mapbox.mapboxsdk.style.layers.FillLayer;
 import com.mapbox.mapboxsdk.style.layers.RasterLayer;
 import com.mapbox.mapboxsdk.style.sources.RasterSource;
 import com.mapbox.mapboxsdk.style.sources.Source;
 import com.mapbox.mapboxsdk.style.sources.TileSet;
+import com.mapbox.mapboxsdk.style.sources.VectorSource;
 import com.mapbox.mapboxsdk.testapp.R;
 import com.mapbox.mapboxsdk.testapp.utils.NavUtils;
 
 import java.io.File;
+
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillColor;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillOutlineColor;
+import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
+
 /**
  * Test activity showcasing a simple MapView without any MapboxMap interaction.
  */
@@ -98,7 +110,24 @@ public class SimpleMapActivity extends AppCompatActivity implements OnMapReadyCa
   @Override
   public void onMapReady(@NonNull MapboxMap mapboxMap) {
 
-    final String rootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
+
+      LatLng lb = new LatLng(36.026691, 115.305265);
+      LatLng lt = new LatLng(36.175867, 115.305265);
+      LatLng rt = new LatLng(36.175867, 115.481908);
+      LatLng rb = new LatLng(36.026691, 115.481908);
+      LatLngBounds latLngBounds = new LatLngBounds.Builder()//根据坐标集，初始化一个坐标界限
+              .include(lb)
+              .include(lt)
+              .include(rt)
+              .include(rb)
+              .build();
+      mapboxMap.animateCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds,10),2000);
+
+      /*LatLng center = new LatLng(34.518923, 101.566284);
+      mapboxMap.animateCamera(CameraUpdateFactory.newLatLngZoom(center, 10),2000);*/
+
+
+      final String rootPath = Environment.getExternalStorageDirectory().getAbsolutePath();
 
     // 加载本地指定的style.json文件
     String styleUri = Style.LIGHT;
@@ -110,6 +139,38 @@ public class SimpleMapActivity extends AppCompatActivity implements OnMapReadyCa
     mapboxMap.setStyle(styleUri, new Style.OnStyleLoaded() {
       @Override
       public void onStyleLoaded(@NonNull Style style) {
+
+          String token = "4fa4968c451a14a7ede2b6de084c38b630b2404ab8b0365f75d1f237aac3baab61f3a9937c6443cc248cce81f8f2a27b4131c539f86682da41e58aacf01d82f92fb6508b283e0ec65ca823ba65fae1a4fe7815fc9c630d421535f132200afeecd1bd89a24cc95048f5a3fd1930dcfeb84401244cca4214d1b232fe07b6c7d4a6";
+          String pbfUrl = "https://sjy-api.gagogroup.cn/api/v1/country/{z}/{x}/{y}.pbf?token="+token;
+
+          String vtMbtilesFilePath = rootPath + "/dt_zzdk.mbtiles";
+          //String vtMbtilesFilePath = rootPath + "/countries.mbtiles";
+
+          File vtMbtiles = new File(vtMbtilesFilePath);
+          if(vtMbtiles.exists()){
+
+              // 天地图影像注记
+              TileSet vecTileSet1 = new TileSet("1.0.0", "http://t0.tianditu.gov.cn/DataServer?T=img_w&X={x}&Y={y}&L={z}&tk=b7faf4433012e536e815a6d391cefb3c");
+              RasterSource vecRasterSource1 = new RasterSource("TDT_CIA_SOURCEID", vecTileSet1, 128);
+              style.addSource(vecRasterSource1);
+              RasterLayer vecRasterLayer1 = new RasterLayer("TDT_CIA_LAYERID", "TDT_CIA_SOURCEID");
+              style.addLayer(vecRasterLayer1);
+
+              String mbtileUrl = "mbtiles://" + vtMbtilesFilePath;
+              TileSet vecTileSet = new TileSet("1.0.0", mbtileUrl);
+              vecTileSet.setScheme("tms");
+              VectorSource vecSource = new VectorSource("vtMbtilesSourceTest", vecTileSet);
+              style.addSource(vecSource);
+              FillLayer terrainData = new FillLayer("vtMbtilesLayerTest", "vtMbtilesSourceTest");
+              terrainData.setSourceLayer("dt_zzdk"); //sanjiangyuan, country dt_zzdk
+              terrainData.setProperties(
+                    fillColor(Color.parseColor("#ff69b4")),
+                      fillOutlineColor(Color.parseColor("#f2b648")),
+                      lineWidth(2.0f)
+              );
+              style.addLayer(terrainData);
+          }
+
 
         // 加载本地指定的mbtiles文件
         /*String mbtilesFilePath = rootPath + "/GEOTIFF.mbtiles";

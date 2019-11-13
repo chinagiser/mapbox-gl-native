@@ -23,6 +23,7 @@ import com.mapbox.mapboxsdk.R;
 import com.mapbox.mapboxsdk.camera.CameraPosition;
 import com.mapbox.mapboxsdk.camera.CameraUpdate;
 import com.mapbox.mapboxsdk.geometry.LatLng;
+import com.mapbox.mapboxsdk.geometry.ProjectedMeters;
 import com.mapbox.mapboxsdk.location.modes.CameraMode;
 import com.mapbox.mapboxsdk.location.modes.RenderMode;
 import com.mapbox.mapboxsdk.log.Logger;
@@ -1307,6 +1308,22 @@ public final class LocationComponent {
    * @param location the latest user location
    */
   private void updateLocation(@Nullable final Location location, boolean fromLastLocation) {
+
+    // chinagiser.net 20190911
+    if(location == null){
+      return;
+    }else{
+      LatLng oldPoint = new LatLng(location.getLatitude(), location.getLongitude());
+      ProjectedMeters oldMetersPoint = mapboxMap.getProjection().getProjectedMetersForLatLng(oldPoint);
+      double northing = oldMetersPoint.getNorthing() + mapboxMap.getLocationComponent().getLocationComponentOptions().getDeltaNorth();
+      double easting = oldMetersPoint.getEasting() + mapboxMap.getLocationComponent().getLocationComponentOptions().getDeltaEast();
+      ProjectedMeters newMetersPoint = new ProjectedMeters(northing, easting);
+      LatLng newPoint = mapboxMap.getProjection().getLatLngForProjectedMeters(newMetersPoint);
+      location.setLatitude(newPoint.getLatitude());
+      location.setLongitude(newPoint.getLongitude());
+    }
+    // end
+
     if (location == null) {
       return;
     } else if (!isLayerReady) {

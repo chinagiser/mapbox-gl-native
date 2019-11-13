@@ -20,6 +20,7 @@
 #include <map>
 #include <mbgl/storage/sqlite3.hpp>
 #include <fstream>
+#include <mbgl/util/compression.hpp>
 
 
 namespace mbgl {
@@ -145,11 +146,56 @@ public:
                 if (!queryData) {
                     mbtilesResponse.noContent = true;
                 } else {
-                    mbtilesResponse.data = std::make_shared<std::string>(*queryData);
+                    std::string formatName = "format";
+                    std::string format = getMbtilesFormat(dbKey, formatName);
+                    if(format == "pbf") {
+                        mbtilesResponse.data = std::make_shared<std::string>(
+                                util::decompressWithHeader(*queryData));
+                    }else{
+                        mbtilesResponse.data = std::make_shared<std::string>(*queryData);
+                    }
                 }
                 callback(mbtilesResponse);
             }
         }
+    }
+
+    std::string getMbtilesFormat(std::string dbKey, std::string metaName){
+        const std::string mbtilesProtocol = "mbtiles://";
+
+        std::string value = "";
+        auto metasTuple = mbtilesFormats.find(dbKey);
+        if(metasTuple != mbtilesFormats.end()){
+            value = metasTuple->second;
+        }
+        if(value != ""){
+            return value;
+        }
+
+
+        std::string mbtilePath = dbKey.substr(mbtilesProtocol.size());
+        std::shared_ptr<mapbox::sqlite::Database> db;
+        auto tuple = mbtilesDbs.find(dbKey);
+        if (tuple != mbtilesDbs.end()) {
+            db = tuple->second;
+        }
+        if (!db) {
+            db = std::make_shared<mapbox::sqlite::Database>(mapbox::sqlite::Database::open(mbtilePath, mapbox::sqlite::ReadWriteCreate));
+            db->setBusyTimeout(Milliseconds::max());
+            mbtilesDbs[dbKey] = db;
+        }
+        std::unique_ptr<mapbox::sqlite::Statement> statement = std::make_unique<mapbox::sqlite::Statement>(*db, "select name, value from metadata where name=?1");
+
+        mapbox::sqlite::Query query {*statement};
+        query.bind(1, metaName);
+
+        Response mbtilesResponse;
+        if (query.run()) {
+            value = query.get<std::string>(1);
+            mbtilesFormats[dbKey] = value;
+        }
+
+        return value;
     }
 
     std::string toHex(int num) {
@@ -405,7 +451,9 @@ private:
     std::unordered_map<AsyncRequest*, std::unique_ptr<AsyncRequest>> tasks;
     std::unordered_map<int64_t, std::unique_ptr<OfflineDownload>> downloads;
 
+    // add by chinagiser.net20190818
     std::map<std::string, std::shared_ptr<mapbox::sqlite::Database>> mbtilesDbs;
+    std::map<std::string, std::string> mbtilesFormats;
 
 };
 
